@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "request-ip": "^3.3.0",
+    "socket": "^0.14.12",
+    "socket.io": "^4.8.0",
     "web-push": "^3.6.7"
   }
 }
