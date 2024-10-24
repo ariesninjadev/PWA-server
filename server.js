@@ -5,9 +5,10 @@ try {
     var fs = require("fs");
     const path = require("path");
     const db = require("./utils/dbm.js");
-    const pwa = require("./utils/pwa.js");
+    const pwaX = require("./utils/pwa.js");
     const bodyParser = require("body-parser");
     const requestIp = require('request-ip');
+    const cors = require('cors'); // Add this line
 
     // SSL Certificate and Key
     const options = {
@@ -19,6 +20,7 @@ try {
     app.set("views", path.join(__dirname, "public"));
     app.use(express.static(__dirname + "/public"));
     app.use(bodyParser.json()); // Add this line to use body-parser
+    app.use(cors()); // Add this line to enable CORS
 
     app.get("/", function (req, res) {
         res.sendFile(__dirname + "/public/index.html");
@@ -41,7 +43,7 @@ try {
         }
 
         // Grab the IP address
-        const ip = requestIp.getClientIp(req);
+        let ip = requestIp.getClientIp(req);
 
         // Remove the "::ffff:" prefix if it exists
         if (ip.startsWith("::ffff:")) {
@@ -50,7 +52,7 @@ try {
 
         // Register the PWA
         db.registerPWA(subscription, ip, deviceId);
-        res.status(200).send("Data received successfully");
+        res.status(200).send({ success: true });
     });
 
     app.get("*", function (req, res) {
@@ -72,34 +74,38 @@ try {
             console.log("Registered PWA: ", result);
         });
 
-        socket.on("update", async function (data) {
-            console.log("Updating PWA: ", data);
-            const result = await db.updatePWAID(data);
-            console.log("Updated PWA: ", result);
+        socket.on("changeID", async function (old, now) {
+            console.log("Changing ID: ", old, now);
+            const result = await db.updatePWAID(old, now);
+            console.log("Changed ID: ", result);
         });
 
-        socket.on("get", async function () {
+        socket.on("get", async function (callback) {
             console.log("Getting all PWA");
-            const result = await db.getAllPWA();
-            console.log("All PWA: ", result);
+            try {
+                const result = await db.getAllPWA();
+                console.log("All PWA: ", result);
+                callback(result); // Send the result back to the client
+            } catch (error) {
+                console.error("Error getting all PWA: ", error);
+                callback([]); // Send an empty array or handle the error as needed
+            }
         });
 
         socket.on("send", async function (data) {
             console.log("Sending notification: ", data);
             const result = await db.getAllPWA();
-            console.log("All PWA: ", result);
             result.forEach((pwa) => {
-                pwa.sendNotification(pwa, data.title, data.body);
+                pwaX.sendNotification(pwa, data.title, data.body);
             });
         });
 
         socket.on("sendto", async function (data) {
             console.log("Sending notification to: ", data);
             const result = await db.getAllPWA();
-            console.log("All PWA: ", result);
             result.forEach((pwa) => {
                 if (pwa.id == data.id) {
-                    pwa.sendNotification(pwa, data.title, data.body);
+                    pwaX.sendNotification(pwa, data.title, data.body);
                 }
             });
         });

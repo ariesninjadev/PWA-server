@@ -17,13 +17,14 @@ const pwaSchema = new mongoose.Schema(
         auth: { type: String, required: true },
         ip: { type: String, required: true },
         time: { type: Date, required: true },
+        deviceID: { type: String, required: true },
     },
     { collection: "pwa" }
 );
 
 const PWA = mongoose.model("pwa", pwaSchema);
 
-async function registerPWA(subscription, ip) {
+async function registerPWA(subscription, ip, deviceId) {
     try {
         const result = await PWA.create({
             id: generateID(),
@@ -32,6 +33,7 @@ async function registerPWA(subscription, ip) {
             auth: subscription.keys.auth,
             ip: ip,
             time: new Date(),
+            deviceID: deviceId,
         });
 
         return result;
@@ -41,12 +43,9 @@ async function registerPWA(subscription, ip) {
     }
 }
 
-async function updatePWAID(id) {
+async function updatePWAID(old, now) {
     try {
-        const result = await PWA.updateOne(
-            { id: id },
-            { $set: { id: generateID() } }
-        );
+        const result = await PWA.updateOne({ id: old }, { $set: { id: now } });
 
         return result;
     } catch (err) {

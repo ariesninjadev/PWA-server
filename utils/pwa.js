@@ -26,7 +26,18 @@ webpush.setVapidDetails('mailto:aries.powvalla@gmail.com', vapidKeys.publicKey, 
 //     }
 // };
 
-function sendNotification(subscription, title, body) {
+async function sendNotification(pwaData, title, body) {
+
+    const subscription = {
+        endpoint: pwaData.endpoint,
+        keys: {
+            p256dh: pwaData.p256dh,
+            auth: pwaData.auth
+        }
+    };
+
+    console.log(subscription);
+
     const payload = JSON.stringify({
         title: title,
         body: body
@@ -41,4 +52,4 @@ function sendNotification(subscription, title, body) {
     });
 }
 
-module.exports = sendNotification;
+module.exports = {sendNotification};
